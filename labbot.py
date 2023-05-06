@@ -13,10 +13,6 @@ app = Flask(__name__)
 lab_data = json.load(open('support_data.json', 'r'))
 
 
-def solicitude_handler(name, message):
-    return f"Nueva solicitud de {name}\n\n{message}."
-
-
 @app.route("/")
 def whatsapp_echo():
     return "WhatsApp Echo Bot is ready!"
@@ -45,9 +41,7 @@ async def whatsapp_webhook():
     participant = payload.get('participant')
 
     #db_manager.create_case(payload)
-    await safeSendMessage(chat_id, message_id, participant, lab_data["DEFAULT_REPLY_MESSAGE"], True)
-    await safeSendMessage(lab_data["SUPPORT_GROUP_ID"], message_id, participant,
-                          solicitude_handler(payload["_data"]["notifyName"], text), False)
+
     await db_manager.manage_message(payload)
 
 
