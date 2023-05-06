@@ -2,8 +2,11 @@ from pymongo import MongoClient, errors
 import json
 import datetime
 import asyncio
+import logging
 
-from wahaAPI import safeSendMessage
+from wahaAPI import send_safe_message
+
+logging.basicConfig(level=logging.INFO)
 
 # case = {
 #     "name": "Daniel",
@@ -28,13 +31,13 @@ def solicitude_handler(name, message):
 
 
 async def manage_message(payload):
-
     # get the last message from the user if it exists
     last_case = cases.find_one({"number": payload["from"]}, sort=[("creation_date", -1)])
     print(last_case)
     if last_case is not None:
         if last_case["active"] is True:
-            await safeSendMessage(payload["from"], payload["id"], payload.get('participant'), "open case", True)
+            logging.info("ACTIVE CASE MESSAGE RECEIVED")
+            await send_safe_message(payload["from"], payload["id"], payload.get('participant'), "open case", True)
             print("Case already exists")
         else:
             print("Case doesn't exist")
@@ -50,14 +53,15 @@ async def manage_message(payload):
 
 
 async def create_case(payload):
+    logging.info("NEW CASE MESSAGE RECEIVED")
     text = payload["body"]
     chat_id = payload["from"]
     message_id = payload['id']
     participant = payload.get('participant')
 
-    await safeSendMessage(chat_id, message_id, participant, lab_data["DEFAULT_REPLY_MESSAGE"], True)
-    await safeSendMessage(lab_data["SUPPORT_GROUP_ID"], message_id, participant,
-                          solicitude_handler(payload["_data"]["notifyName"], text), False)
+    await send_safe_message(chat_id, message_id, participant, lab_data["DEFAULT_REPLY_MESSAGE"], True)
+    await send_safe_message(lab_data["SUPPORT_GROUP_ID"], message_id, participant,
+                            solicitude_handler(payload["_data"]["notifyName"], text), False)
     case = {
         "name": payload["_data"]["notifyName"],
         "number": payload["from"],
@@ -69,6 +73,7 @@ async def create_case(payload):
     try:
         cases.insert_one(case)
         # close the case in 10 seconds
+        logging.info("CASE CREATED")
         await asyncio.create_task(close_case(case["_id"]))
 
     except errors.DuplicateKeyError:
@@ -81,3 +86,4 @@ async def close_case(case_id):
 
     cases.update_one({"_id": case_id}, {"$set": {"active": False}})
     print("Case closed")
+    logging.info("CASE CLOSED")

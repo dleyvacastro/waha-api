@@ -3,18 +3,19 @@ from time import sleep
 import random
 import asyncio
 
-async def safeSendMessage(chat_id, message_id, participant, text, reply):
+
+async def send_safe_message(chat_id, message_id, participant, text, reply):
     send_seen(chat_id=chat_id, message_id=message_id, participant=participant)
-    startTyping(chat_id=chat_id)
+    start_typing(chat_id=chat_id)
     await asyncio.sleep(random.randint(1, 3))
-    stopTyping(chat_id=chat_id)
+    stop_typing(chat_id=chat_id)
     if reply:
         reply_message(chat_id=chat_id, message_id=message_id, text=text)
     else:
         send_message(chat_id=chat_id, text=text)
 
 
-def startTyping(chat_id):
+def start_typing(chat_id):
     response = requests.post(
         "http://localhost:3000/api/startTyping",
         json={
@@ -25,7 +26,7 @@ def startTyping(chat_id):
     response.raise_for_status()
 
 
-def stopTyping(chat_id):
+def stop_typing(chat_id):
     response = requests.post(
         "http://localhost:3000/api/stopTyping",
         json={

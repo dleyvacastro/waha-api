@@ -1,11 +1,9 @@
 import json
-import asyncio
 
 from flask import Flask
 from flask import request
 from pprint import pprint
 
-from wahaAPI import safeSendMessage
 import db_manager
 
 app = Flask(__name__)
@@ -40,10 +38,9 @@ async def whatsapp_webhook():
     # For groups - who sent the message
     participant = payload.get('participant')
 
-    #db_manager.create_case(payload)
+    # db_manager.create_case(payload)
 
     await db_manager.manage_message(payload)
-
 
     return "OK"
 
