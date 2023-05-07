@@ -1,19 +1,36 @@
 import json
 
+import pandas as pd
 from flask import Flask
 from flask import request
+from flask import render_template
 from pprint import pprint
 
 import db_manager
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 lab_data = json.load(open('support_data.json', 'r'))
 
 
 @app.route("/")
 def whatsapp_echo():
-    return "WhatsApp Echo Bot is ready!"
+    # Load the data from the database
+    df = db_manager.get_cases_df()
+
+    # Define a function to apply background color to cells in the 'active' column
+    def color_false(val):
+        color = 'red' if val == False else 'green'
+        return 'background-color: %s' % color
+
+    # Apply the background color to the 'active' column
+    df_styled = df.style.applymap(color_false, subset=pd.IndexSlice[:, ['active']])
+
+    # Convert the styled DataFrame to an HTML table
+    table_html = df_styled.to_html(classes='table')
+
+    # Pass the table HTML and column names to the template
+    return render_template('dashboard.html', tables=[table_html], titles=df.columns.values)
 
 
 @app.route("/bot", methods=["GET", "POST"])
